@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/src/services/events-service.js
-Salida
-
 // Pipeline: RSS de prensa -> clasificar -> extraer ubicación (y campos de
 // accidente) -> geocodificar -> deduplicar contra lo que ya teníamos ->
 // cámaras cercanas (para ACCIDENT/TRAFFIC) -> guardar. Se ejecuta cada ~10
