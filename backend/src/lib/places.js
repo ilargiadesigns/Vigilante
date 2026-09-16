@@ -1,8 +1,3 @@
-ash
-
-cat /home/claude/vigilante-repo/backend/src/lib/places.js
-Salida
-
 // Centroides aproximados de distritos/barrios de Barcelona, para cuando el
 // titular no menciona una carretera conocida (ver classify.js) pero sí un
 // lugar reconocible. No inventamos coordenadas más precisas que esto.
