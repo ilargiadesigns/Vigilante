@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/src/lib/geo.js
-Salida
-
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = (d) => (d * Math.PI) / 180;
