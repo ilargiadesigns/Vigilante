@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/server.js
-Salida
-
 const express = require("express");
 const cors = require("cors");
 
