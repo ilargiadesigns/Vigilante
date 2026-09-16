@@ -1,0 +1,8 @@
+bash
+
+cat /home/claude/vigilante-repo/backend/.gitignore
+Salida
+
+node_modules/
+.env
+data/events.json
