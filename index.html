@@ -1,0 +1,353 @@
+bash
+
+cat /home/claude/vigilante-repo/index.html
+Salida
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Vigilante — Barcelona</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --bg:#060f1e; --bg-2:#0a1729; --panel:#0b1d33; --panel-2:#0e2540;
+    --border:#1c3454; --border-soft:#142942;
+    --blue:#4d9fe0; --blue-dim:#2e6fa8; --cyan:#7fd4e8;
+    --red:#ef5350; --red-dim:#8f3230;
+    --text:#e7eef7; --text-muted:#7f96b3; --text-faint:#4c6785;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);}
+  body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+
+  .app{display:grid;grid-template-rows:56px 1fr 92px;height:100vh;background:radial-gradient(1200px 700px at 30% -10%,#0d2440 0%,transparent 60%),var(--bg);}
+
+  .topbar{display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:1px solid var(--border-soft);background:rgba(9,19,35,0.9);backdrop-filter:blur(10px);z-index:1000;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse-dot 2.2s ease-in-out infinite;}
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:.02em;margin:0;}
+  .brand span{color:var(--text-muted);font-weight:400;}
+  .badge{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.05em;color:var(--cyan);border:1px solid var(--border);background:var(--panel);padding:3px 7px;border-radius:4px;}
+  .topbar-spacer{flex:1;}
+  .legend{display:flex;gap:18px;align-items:center;}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);}
+  .legend-swatch{width:9px;height:9px;border-radius:50%;flex:none;}
+  .legend-swatch.cam{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+  .legend-swatch.crime{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .status{font-size:11.5px;padding-left:16px;border-left:1px solid var(--border-soft);color:var(--text-muted);}
+  .status.ok b{color:var(--cyan);}
+  .status.err b{color:#f2a154;}
+
+  .content{display:grid;grid-template-columns:1fr 340px;min-height:0;}
+  .map-wrap{position:relative;min-height:0;background:#050c18;}
+  #map{width:100%;height:100%;background:#050c18;}
+  .leaflet-container{background:#050c18;font-family:"IBM Plex Sans",sans-serif;}
+  .dark-tiles{filter:invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.6);}
+  .leaflet-popup-content-wrapper{background:#0c1f38;color:var(--text);border:1px solid var(--border);border-radius:8px;}
+  .leaflet-popup-tip{background:#0c1f38;}
+  .leaflet-popup-content{font-size:12px;line-height:1.5;margin:10px 12px;}
+  .leaflet-popup-content b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px;}
+  .leaflet-control-attribution{background:rgba(9,19,35,0.75)!important;color:var(--text-faint)!important;font-size:10px!important;}
+  .leaflet-control-attribution a{color:var(--text-muted)!important;}
+  .leaflet-control-zoom a{background:var(--panel)!important;color:var(--text)!important;border-color:var(--border)!important;}
+
+  .cam-pin{width:16px;height:16px;position:relative;}
+  .cam-pin .halo{position:absolute;inset:-6px;background:var(--blue);opacity:.18;border-radius:50%;}
+  .cam-pin .core{position:absolute;inset:3px;background:var(--bg-2);border:1.4px solid var(--blue);border-radius:50%;}
+  .cam-pin .lens{position:absolute;inset:6px;background:var(--blue);border-radius:50%;}
+
+  .crime-pin{width:14px;height:14px;position:relative;}
+  .crime-pin .ring{position:absolute;inset:-2px;border:1.4px solid var(--red);border-radius:50%;opacity:.6;animation:ring-pulse 2.4s ease-out infinite;}
+  .crime-pin .core{position:absolute;inset:3px;background:var(--red);border-radius:50%;}
+
+  .map-empty-note{position:absolute;left:16px;bottom:16px;font-size:11px;color:var(--text-faint);max-width:300px;line-height:1.5;background:rgba(6,15,30,0.7);padding:8px 10px;border-radius:6px;border:1px solid var(--border-soft);display:none;}
+  .map-empty-note.show{display:block;}
+
+  .side-panel{border-left:1px solid var(--border-soft);background:rgba(10,21,38,0.94);display:flex;flex-direction:column;min-height:0;}
+  .panel-section-title{font-size:11px;letter-spacing:.05em;color:var(--text-muted);padding:14px 16px 8px;}
+
+  .cam-card{margin:0 16px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);padding:12px 13px;display:none;}
+  .cam-card.active{display:block;}
+  .cam-image-wrap{position:relative;aspect-ratio:4/3;background:#050c18;border-radius:6px;overflow:hidden;margin-bottom:10px;border:1px solid var(--border-soft);}
+  .cam-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cam-image-wrap.err img{display:none;}
+  .cam-image-wrap.err::after{content:"Imagen no disponible ahora mismo";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font-size:11px;color:var(--text-faint);}
+  .cam-card .name{font-size:13px;font-weight:600;margin:0 0 4px;}
+  .cam-card .meta{font-size:11.5px;color:var(--text-muted);margin:0 0 3px;}
+  .cam-card .coords{font-size:10.5px;color:var(--text-faint);margin:6px 0 10px;}
+  .cam-card .note{font-size:10.5px;color:var(--text-faint);line-height:1.5;margin:0 0 10px;padding:7px 8px;background:var(--bg-2);border-radius:5px;border:1px solid var(--border-soft);}
+  .cam-card .row{display:flex;gap:7px;}
+  .btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:11px;padding:6px 9px;border-radius:5px;cursor:pointer;font-family:"IBM Plex Sans",sans-serif;text-decoration:none;display:inline-block;}
+  .btn:hover{border-color:var(--blue-dim);color:var(--text);}
+  .btn.primary{border-color:var(--blue-dim);color:var(--cyan);}
+
+  .feed-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 0 10px;}
+  .feed-count{padding:0 16px 8px;font-size:11px;color:var(--text-faint);}
+  .feed-list{flex:1;overflow-y:auto;padding:0 12px 8px;display:flex;flex-direction:column;gap:7px;}
+  .feed-item{border:1px solid var(--border-soft);border-left:2px solid var(--red-dim);background:var(--panel);border-radius:6px;padding:9px 10px;text-decoration:none;display:block;color:inherit;}
+  .feed-item:hover{border-color:var(--border);border-left-color:var(--red);background:var(--panel-2);}
+  .feed-item .top-row{display:flex;justify-content:space-between;gap:8px;margin-bottom:3px;}
+  .feed-item .type{font-size:12px;font-weight:600;color:var(--text);}
+  .feed-item .time{font-size:10px;color:var(--text-faint);white-space:nowrap;font-family:"IBM Plex Mono",monospace;}
+  .feed-item .title{font-size:11.5px;color:var(--text-muted);line-height:1.4;margin-bottom:4px;}
+  .feed-item .src{font-size:10px;color:var(--text-faint);}
+  .feed-empty{padding:30px 16px;text-align:center;color:var(--text-faint);font-size:12px;line-height:1.6;}
+
+  .timeline-bar{border-top:1px solid var(--border-soft);background:rgba(9,19,35,0.9);backdrop-filter:blur(10px);display:flex;align-items:center;gap:18px;padding:0 22px;}
+  .tl-label{font-size:11px;color:var(--text-muted);width:160px;flex:none;line-height:1.4;}
+  .tl-label b{display:block;color:var(--text);font-size:13px;font-weight:600;font-family:"IBM Plex Mono",monospace;}
+  .tl-track{flex:1;position:relative;padding:0 4px;}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:linear-gradient(to right,var(--blue) 0%,var(--blue) var(--fill,100%),var(--border) var(--fill,100%),var(--border) 100%);outline:none;cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);border:3px solid #06111f;box-shadow:0 0 8px rgba(127,212,232,0.6);cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--cyan);border:3px solid #06111f;box-shadow:0 0 8px rgba(127,212,232,0.6);cursor:pointer;}
+  .tl-ticks{display:flex;justify-content:space-between;margin-top:6px;font-size:9.5px;color:var(--text-faint);font-family:"IBM Plex Mono",monospace;}
+
+  @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.35;}}
+  @keyframes ring-pulse{0%{transform:scale(.6);opacity:.7;}100%{transform:scale(2.4);opacity:0;}}
+  @media (prefers-reduced-motion:reduce){.brand .dot,.crime-pin .ring{animation:none;}}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#1c3454;border-radius:4px;}
+
+  @media (max-width:820px){
+    .content{grid-template-columns:1fr;}
+    .side-panel{position:absolute;right:0;top:56px;bottom:92px;width:min(340px,88vw);box-shadow:-12px 0 30px rgba(0,0,0,0.4);}
+    .legend{display:none;}
+    .tl-label{width:120px;font-size:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span><h1>VIGILANTE <span>— Barcelona</span></h1></div>
+    <span class="badge">Servei Català de Trànsit + prensa</span>
+    <div class="topbar-spacer"></div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch cam"></span>Cámara (imagen real)</div>
+      <div class="legend-item"><span class="legend-swatch crime"></span>Suceso (aprox.)</div>
+    </div>
+    <div class="status mono" id="statusLine">conectando…</div>
+  </header>
+
+  <div class="content">
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-empty-note" id="emptyNote"></div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="panel-section-title">CÁMARA SELECCIONADA</div>
+      <div class="cam-card" id="camCard">
+        <div class="cam-image-wrap"><img id="camImage" alt="Imagen de la cámara" onerror="this.closest('.cam-image-wrap').classList.add('err')"></div>
+        <p class="name" id="camName">—</p>
+        <p class="meta" id="camMeta">—</p>
+        <p class="coords mono" id="camCoords">—</p>
+        <div class="row">
+          <a class="btn primary" id="camOriginal" href="#" target="_blank" rel="noopener">Abrir imagen original</a>
+          <button class="btn" id="camClose">Cerrar</button>
+        </div>
+      </div>
+
+      <div class="feed-wrap">
+        <div class="panel-section-title" style="padding-top:2px;">SUCESOS (PIPELINE AUTOMÁTICO)</div>
+        <div class="feed-count mono" id="feedCount">—</div>
+        <div class="feed-list" id="feedList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="timeline-bar">
+    <div class="tl-label">Ventana temporal<b id="tlDateLabel">—</b></div>
+    <div class="tl-track">
+      <input type="range" id="tlRange" min="0" max="14" value="0" step="1" aria-label="Desplazarse en el tiempo">
+      <div class="tl-ticks"><span>hoy</span><span>-5 días</span><span>-10 días</span><span>-14 días</span></div>
+    </div>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  const API_BASE = "https://vigilante-backend-8si0.onrender.com";
+
+  const statusLine = document.getElementById("statusLine");
+  const emptyNote = document.getElementById("emptyNote");
+
+  const map = L.map("map", { zoomControl: true }).setView([41.3874, 2.1686], 13);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+    className: "dark-tiles",
+  }).addTo(map);
+
+  function camIcon(){
+    return L.divIcon({ className:"", html:'<div class="cam-pin"><span class="halo"></span><span class="core"></span><span class="lens"></span></div>', iconSize:[16,16], iconAnchor:[8,8] });
+  }
+  function crimeIcon(){
+    return L.divIcon({ className:"", html:'<div class="crime-pin"><span class="ring"></span><span class="core"></span></div>', iconSize:[14,14], iconAnchor:[7,7] });
+  }
+
+  // ---- cámaras ----
+  const camCard = document.getElementById("camCard");
+  const camImage = document.getElementById("camImage");
+  const camImageWrap = document.querySelector(".cam-image-wrap");
+  const camName = document.getElementById("camName");
+  const camMeta = document.getElementById("camMeta");
+  const camCoords = document.getElementById("camCoords");
+  const camOriginal = document.getElementById("camOriginal");
+  document.getElementById("camClose").addEventListener("click", ()=>{
+    camCard.classList.remove("active");
+    if (camRefreshTimer) clearInterval(camRefreshTimer);
+  });
+
+  let currentCam = null;
+  let camRefreshTimer = null;
+
+  function bustCache(url){
+    const sep = url.includes("?") ? "&" : "?";
+    return url + sep + "_=" + Date.now();
+  }
+
+  function refreshCamImage(){
+    if (!currentCam) return;
+    camImageWrap.classList.remove("err");
+    camImage.src = bustCache(currentCam.imageUrl);
+  }
+
+  function selectCamera(cam){
+    currentCam = cam;
+    camName.textContent = cam.road || "Cámara pública";
+    camMeta.textContent = [cam.municipality, cam.pk ? "PK "+cam.pk : null].filter(Boolean).join(" · ") || "—";
+    camCoords.textContent = `${cam.lat.toFixed(5)}, ${cam.lon.toFixed(5)}` + (cam.source ? ` · ${cam.source}` : "");
+    camOriginal.href = cam.imageUrl;
+    refreshCamImage();
+    camCard.classList.add("active");
+    if (camRefreshTimer) clearInterval(camRefreshTimer);
+    camRefreshTimer = setInterval(refreshCamImage, 8000); // imagen fresca cada 8s mientras está abierta
+  }
+
+  // ---- incidentes ----
+  const feedList = document.getElementById("feedList");
+  const feedCount = document.getElementById("feedCount");
+  const range = document.getElementById("tlRange");
+  const tlDateLabel = document.getElementById("tlDateLabel");
+  let eventMarkers = [];
+  let eventsData = [];
+  const WINDOW_DAYS = 5;
+
+  const TYPE_LABEL = {
+    FIRE: "Incendio", ACCIDENT: "Accidente", STABBING: "Apuñalamiento",
+    SHOOTING: "Disparo", ROBBERY: "Robo", ASSAULT: "Agresión",
+    POLICE: "Policial", EMERGENCY: "Emergencia", TRAFFIC: "Tráfico", OTHER: "Suceso",
+  };
+
+  function fmtDate(d){ return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"}); }
+  function fmtTime(d){ return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}); }
+
+  function renderEvents(){
+    feedList.innerHTML = "";
+    eventMarkers.forEach(m => map.removeLayer(m));
+    eventMarkers = [];
+
+    const val = parseInt(range.value,10);
+    const now = new Date();
+    const asOf = new Date(now); asOf.setDate(asOf.getDate()-val);
+    tlDateLabel.textContent = val===0 ? "Hoy" : "Hace "+val+" días · "+fmtDate(asOf);
+
+    const windowStart = new Date(asOf); windowStart.setDate(windowStart.getDate()-WINDOW_DAYS);
+
+    const visible = eventsData.filter(ev=>{
+      const d = new Date(ev.occurred_at);
+      return d <= asOf && d >= windowStart;
+    });
+
+    feedCount.textContent = visible.length + " suceso" + (visible.length===1?"":"s") + " · ventana " + WINDOW_DAYS + " días";
+
+    if (!visible.length){
+      feedList.innerHTML = '<div class="feed-empty">Sin sucesos reconocidos en esta ventana. Prueba a mover la línea de tiempo, o el pipeline aún no ha corrido (tarda hasta 10 min tras desplegar).</div>';
+    }
+
+    visible.forEach(ev=>{
+      const marker = L.marker([ev.lat, ev.lon], { icon: crimeIcon() }).addTo(map);
+      const label = TYPE_LABEL[ev.type] || ev.type;
+      let popup = `<b>${label}${ev.status==="CLEARED" ? " · resuelto (estimado)" : ""}</b>${ev.title}<br><span style="color:var(--text-faint)">${ev.location_text||""} · ${ev.sources[0]?.name||""}</span>`;
+      if (ev.nearby_cameras && ev.nearby_cameras.length){
+        popup += `<br><span style="color:var(--text-faint)">📹 Cámara cercana — ${ev.nearby_cameras[0].distance_meters} m</span>`;
+      }
+      marker.bindPopup(popup);
+      eventMarkers.push(marker);
+
+      const d = new Date(ev.occurred_at);
+      const a = document.createElement("a");
+      a.className = "feed-item";
+      a.href = ev.sources[0]?.link || "#"; a.target = "_blank"; a.rel = "noopener";
+      const camLine = ev.nearby_cameras && ev.nearby_cameras.length
+        ? `<div class="src">📹 cámara cercana — ${ev.nearby_cameras[0].distance_meters} m (no confirma que muestre el suceso)</div>` : "";
+      a.innerHTML = `
+        <div class="top-row"><span class="type">${label}${ev.status==="CLEARED"?" · resuelto":""}</span><span class="time mono">${fmtDate(d)} ${fmtTime(d)}</span></div>
+        <div class="title">${ev.title}</div>
+        <div class="src">${ev.location_text||"—"} · ${ev.sources.length} fuente${ev.sources.length===1?"":"s"}</div>
+        ${camLine}`;
+      feedList.appendChild(a);
+    });
+  }
+  range.addEventListener("input", renderEvents);
+
+  // ---- carga de datos ----
+  function setStatus(ok, msg){
+    statusLine.className = "status mono " + (ok?"ok":"err");
+    statusLine.innerHTML = ok ? "<b>●</b> "+msg : "<b>●</b> "+msg;
+  }
+
+  async function loadCameras(){
+    try{
+      const res = await fetch(`${API_BASE}/api/cameras`);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const data = await res.json();
+      (data.cameras||[]).forEach(cam=>{
+        const marker = L.marker([cam.lat, cam.lon], { icon: camIcon() }).addTo(map);
+        marker.bindTooltip(`${cam.road || "Cámara"} · ${cam.municipality || ""}`);
+        marker.on("click", ()=> selectCamera(cam));
+      });
+      return data.cameras ? data.cameras.length : 0;
+    } catch(e){
+      console.error("cameras:", e);
+      return null;
+    }
+  }
+
+  async function loadEvents(){
+    try{
+      const res = await fetch(`${API_BASE}/api/events`);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const data = await res.json();
+      eventsData = data.events || [];
+      renderEvents();
+      return eventsData.length;
+    } catch(e){
+      console.error("events:", e);
+      return null;
+    }
+  }
+
+  (async function init(){
+    const [camCount, evCount] = await Promise.all([loadCameras(), loadEvents()]);
+    if (camCount===null || evCount===null){
+      setStatus(false, "backend no disponible");
+      emptyNote.textContent = "No se ha podido conectar con el backend en " + API_BASE + ". Arráncalo en local (ver backend/README.md) o despliégalo y actualiza API_BASE en index.html.";
+      emptyNote.classList.add("show");
+    } else {
+      setStatus(true, camCount+" cámaras · "+evCount+" sucesos");
+    }
+  })();
+})();
+</script>
+</body>
+</html>
