@@ -1,8 +1,3 @@
-ash
-
-cat /home/claude/vigilante-repo/backend/src/lib/classify.js
-Salida
-
 // Clasificación por palabras clave (sin NLP real) y extracción de campos
 // adicionales para accidentes. Es deliberadamente simple y auditable: cada
 // regla es una expresión regular visible, no una caja negra.
