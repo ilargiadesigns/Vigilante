@@ -15,12 +15,10 @@ const { XMLParser } = require("fast-xml-parser");
 
 const FEED_URL = "http://www.gencat.cat/transit/opendata/cameres.xml";
 
-// Bounding box aproximado de Barcelona + área metropolitana
-// (Barcelonès, Baix Llobregat, Vallès, sur del Maresme).
 const BBOX = { latMin: 41.2, latMax: 41.62, lonMin: 1.85, lonMax: 2.35 };
 
 let cache = { data: null, fetchedAt: 0 };
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min — la lista de cámaras casi no cambia
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
 function idFromLink(link) {
   const m = /sctidcam=([^&.]+)/.exec(link || "");
@@ -33,7 +31,7 @@ async function getCameras() {
   const now = Date.now();
   if (cache.data && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data;
 
-  const res = await fetch(FEED_URL);
+  const res = await fetch(FEED_URL, { headers: { "User-Agent": "Mozilla/5.0 (compatible; vigilante-app/0.1)" } });
   if (!res.ok) throw new Error(`SCT cameres.xml -> HTTP ${res.status}`);
   const xml = await res.text();
 
@@ -41,6 +39,9 @@ async function getCameras() {
   const parsed = parser.parse(xml);
   const members = parsed?.["wfs:FeatureCollection"]?.["gml:featureMember"] || [];
   const list = Array.isArray(members) ? members : [members];
+  if (!list.length) {
+    console.error("SCT cameres.xml: 0 elementos tras parsear. Primeros 300 caracteres:", xml.slice(0, 300));
+  }
 
   const cameras = [];
   const seen = new Set();
@@ -58,7 +59,7 @@ async function getCameras() {
     const link = c["cite:link"];
     if (!link) continue;
     const id = idFromLink(link);
-    if (seen.has(id)) continue; // el feed trae alguna cámara duplicada
+    if (seen.has(id)) continue;
     seen.add(id);
 
     cameras.push({
