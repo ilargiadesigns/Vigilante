@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/src/lib/dedup.js
-Salida
-
 const { haversineMeters } = require("./geo");
 
 function titleSimilarity(a, b) {
