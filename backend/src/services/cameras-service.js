@@ -51,7 +51,8 @@ async function getCameras() {
   for (const m of list) {
     const c = m["cite:cameres"];
     if (!c) continue;
-    const coordStr = c["cite:geom"]?.["gml:Point"]?.["gml:coordinates"];
+    const coordNode = c["cite:geom"]?.["gml:Point"]?.["gml:coordinates"];
+    const coordStr = coordNode && typeof coordNode === "object" ? coordNode["#text"] : coordNode;
     if (!coordStr) continue;
     const [lonStr, latStr] = String(coordStr).split(",");
     const lon = parseFloat(lonStr);
