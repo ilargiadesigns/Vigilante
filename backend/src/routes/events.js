@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/src/routes/events.js
-Salida
-
 const express = require("express");
 const { getEvents, getStatus, runPipeline } = require("../services/events-service");
 
