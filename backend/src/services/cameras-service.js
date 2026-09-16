@@ -29,7 +29,7 @@ function idFromLink(link) {
 
 async function getCameras() {
   const now = Date.now();
-  if (cache.data && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data;
+  if (cache.data && cache.data.length && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data;
 
   const res = await fetch(FEED_URL, { headers: { "User-Agent": "Mozilla/5.0 (compatible; vigilante-app/0.1)" } });
   if (!res.ok) throw new Error(`SCT cameres.xml -> HTTP ${res.status}`);
@@ -39,8 +39,11 @@ async function getCameras() {
   const parsed = parser.parse(xml);
   const members = parsed?.["wfs:FeatureCollection"]?.["gml:featureMember"] || [];
   const list = Array.isArray(members) ? members : [members];
-  if (!list.length) {
-    console.error("SCT cameres.xml: 0 elementos tras parsear. Primeros 300 caracteres:", xml.slice(0, 300));
+  console.error(`SCT cameres.xml: respuesta ${xml.length} bytes, ${list.length} elementos en bruto tras parsear.`);
+  if (list.length) {
+    console.error("Primer elemento parseado:", JSON.stringify(list[0]).slice(0, 500));
+  } else {
+    console.error("Primeros 300 caracteres de la respuesta:", xml.slice(0, 300));
   }
 
   const cameras = [];
