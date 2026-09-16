@@ -1,6 +1,3 @@
-cat /home/claude/vigilante-repo/backend/src/services/cameras-service.js
-Salida
-
 // Cámaras de tráfico reales del Servei Català de Trànsit (dato abierto,
 // oficial, sin necesidad de clave):
 // XML: http://www.gencat.cat/transit/opendata/cameres.xml
