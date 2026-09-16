@@ -1,8 +1,3 @@
-ash
-
-cat /home/claude/vigilante-repo/backend/src/routes/cameras.js
-Salida
-
 const express = require("express");
 const { getCameras } = require("../services/cameras-service");
 
