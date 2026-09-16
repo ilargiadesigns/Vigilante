@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/backend/src/lib/geocode.js
-Salida
-
 // Geocodificación en dos pasos:
 // 1) diccionario de barrios/distritos (rápido, sin red)
 // 2) Nominatim (OpenStreetMap), como respaldo, respetando su política de uso
