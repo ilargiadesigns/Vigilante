@@ -29,6 +29,12 @@ const QUERIES = [
   "Barcelona (tiroteo OR disparo OR arma de foc)",
   "Barcelona (detenido OR detingut OR mossos OR guàrdia urbana)",
   "Barcelona (emergencia OR evacuación OR rescate)",
+  // Más términos: sucesos que no siempre usan las palabras de arriba
+  "Barcelona (explosión OR fuga de gas OR derrumbe OR inundación)",
+  "Barcelona (desalojo OR okupas OR altercado OR disturbios)",
+  "Barcelona (suceso OR sucesos OR operativo policial OR alerta)",
+  // Área metropolitana (para ir ampliando más adelante)
+  "(L'Hospitalet OR Badalona OR \"Santa Coloma\" OR Cornellà) (accidente OR robo OR incendio OR agresión)",
 ];
 
 let store = [];
