@@ -1,8 +1,3 @@
-bash
-
-cat /home/claude/vigilante-repo/index.html
-Salida
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -133,6 +128,7 @@ Salida
       <div class="legend-item"><span class="legend-swatch cam"></span>Cámara (imagen real)</div>
       <div class="legend-item"><span class="legend-swatch crime"></span>Suceso (aprox.)</div>
     </div>
+    <button class="btn" id="heatToggle">Mapa de calor</button>
     <div class="status mono" id="statusLine">conectando…</div>
   </header>
 
@@ -173,6 +169,7 @@ Salida
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script>
 (function(){
   const API_BASE = "https://vigilante-backend-8si0.onrender.com";
@@ -240,13 +237,30 @@ Salida
   const tlDateLabel = document.getElementById("tlDateLabel");
   let eventMarkers = [];
   let eventsData = [];
-  const WINDOW_DAYS = 10;
+  let heatLayer = null;
+  let heatMode = false;
+  const WINDOW_DAYS = 30;
 
   const TYPE_LABEL = {
     FIRE: "Incendio", ACCIDENT: "Accidente", STABBING: "Apuñalamiento",
     SHOOTING: "Disparo", ROBBERY: "Robo", ASSAULT: "Agresión",
     POLICE: "Policial", EMERGENCY: "Emergencia", TRAFFIC: "Tráfico", OTHER: "Suceso",
   };
+
+  // Peso relativo por tipo para el mapa de calor: no significa "más grave",
+  // solo hace que ciertos tipos pesen algo más al acumular densidad.
+  const TYPE_WEIGHT = {
+    STABBING: 1.5, SHOOTING: 1.5, FIRE: 1.4, EMERGENCY: 1.3,
+    ROBBERY: 1.2, ASSAULT: 1.2, ACCIDENT: 1, TRAFFIC: 1, POLICE: 0.8, OTHER: 1,
+  };
+
+  const heatToggle = document.getElementById("heatToggle");
+  heatToggle.addEventListener("click", ()=>{
+    heatMode = !heatMode;
+    heatToggle.classList.toggle("primary", heatMode);
+    heatToggle.textContent = heatMode ? "Puntos" : "Mapa de calor";
+    renderEvents();
+  });
 
   function fmtDate(d){ return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"}); }
   function fmtTime(d){ return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}); }
@@ -255,6 +269,7 @@ Salida
     feedList.innerHTML = "";
     eventMarkers.forEach(m => map.removeLayer(m));
     eventMarkers = [];
+    if (heatLayer){ map.removeLayer(heatLayer); heatLayer = null; }
 
     const val = parseInt(range.value,10);
     const now = new Date();
@@ -274,17 +289,30 @@ Salida
       feedList.innerHTML = '<div class="feed-empty">Sin sucesos reconocidos en esta ventana. Prueba a mover la línea de tiempo, o el pipeline aún no ha corrido (tarda hasta 10 min tras desplegar).</div>';
     }
 
-    visible.forEach(ev=>{
-      const marker = L.marker([ev.lat, ev.lon], { icon: crimeIcon() }).addTo(map);
-      const label = TYPE_LABEL[ev.type] || ev.type;
-      let popup = `<b>${label}${ev.status==="CLEARED" ? " · resuelto (estimado)" : ""}</b>${ev.title}<br><span style="color:var(--text-faint)">${ev.location_text||""} · ${ev.sources[0]?.name||""}</span>`;
-      if (ev.nearby_cameras && ev.nearby_cameras.length){
-        popup += `<br><span style="color:var(--text-faint)">📹 Cámara cercana — ${ev.nearby_cameras[0].distance_meters} m</span>`;
+    if (heatMode){
+      const points = visible.map(ev => [ev.lat, ev.lon, TYPE_WEIGHT[ev.type] || 1]);
+      if (points.length && window.L && L.heatLayer){
+        heatLayer = L.heatLayer(points, {
+          radius: 32, blur: 24, maxZoom: 17, minOpacity: 0.25,
+          gradient: { 0.2: "#1b2f4d", 0.4: "#2e6fa8", 0.6: "#4d9fe0", 0.8: "#f2a154", 1.0: "#ef5350" },
+        }).addTo(map);
       }
-      marker.bindPopup(popup);
-      eventMarkers.push(marker);
+    }
 
+    visible.forEach(ev=>{
       const d = new Date(ev.occurred_at);
+      const label = TYPE_LABEL[ev.type] || ev.type;
+
+      if (!heatMode){
+        const marker = L.marker([ev.lat, ev.lon], { icon: crimeIcon() }).addTo(map);
+        let popup = `<b>${label}${ev.status==="CLEARED" ? " · resuelto (estimado)" : ""}</b>${ev.title}<br><span style="color:var(--text-faint)">${ev.location_text||""} · ${ev.sources[0]?.name||""}</span>`;
+        if (ev.nearby_cameras && ev.nearby_cameras.length){
+          popup += `<br><span style="color:var(--text-faint)">📹 Cámara cercana — ${ev.nearby_cameras[0].distance_meters} m</span>`;
+        }
+        marker.bindPopup(popup);
+        eventMarkers.push(marker);
+      }
+
       const a = document.createElement("a");
       a.className = "feed-item";
       a.href = ev.sources[0]?.link || "#"; a.target = "_blank"; a.rel = "noopener";
