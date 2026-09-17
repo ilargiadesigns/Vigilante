@@ -283,10 +283,10 @@
 
     const windowStart = new Date(asOf); windowStart.setDate(windowStart.getDate()-WINDOW_DAYS);
 
-    const visible = eventsData.filter(ev=>{
+        const visible = eventsData.filter(ev=>{
       const d = new Date(ev.occurred_at);
       return d <= asOf && d >= windowStart;
-    });
+    }).sort((a,b)=> new Date(b.occurred_at) - new Date(a.occurred_at));
 
     feedCount.textContent = visible.length + " suceso" + (visible.length===1?"":"s") + " · ventana " + WINDOW_DAYS + " días";
 
