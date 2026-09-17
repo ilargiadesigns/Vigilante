@@ -75,5 +75,22 @@ const PLACES = {
   sabadell: [41.5433, 2.1094],
   "el prat": [41.325, 2.0951],
   viladecans: [41.3151, 2.0192],
+  // Barrios de L'Hospitalet de Llobregat
+  collblanc: [41.3667, 2.108],
+  "la torrassa": [41.3651, 2.1052],
+  "santa eulàlia": [41.3596, 2.1],
+  bellvitge: [41.355, 2.108],
+  "can serra": [41.373, 2.105],
+  "pubilla cases": [41.369, 2.101],
+  "el gornal": [41.355, 2.095],
+  sanfeliu: [41.373, 2.094],
+  // Barrios de Badalona
+  "sant roc": [41.455, 2.24],
+  llefià: [41.447, 2.233],
+  sistrells: [41.453, 2.228],
+  gorg: [41.443, 2.235],
+  casagemes: [41.448, 2.244],
+  bufalà: [41.44, 2.245],
+  montigalà: [41.465, 2.255],
 };
 module.exports = { PLACES };
