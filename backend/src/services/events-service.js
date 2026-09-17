@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { XMLParser } = require("fast-xml-parser");
-const { getCameras } = require("./cameras-service");
+const { getAllCameras } = require("./cameras-all");
 const { classify, buildRoadGazetteer, findRoadMention, findDirection } = require("../lib/classify");
 const { geocodeIncident } = require("../lib/geocode");
 const { isSameEvent } = require("../lib/dedup");
@@ -91,7 +91,7 @@ function nearbyCameras(lat, lon, cameras) {
 
 async function runPipeline() {
   try {
-    const cameras = await getCameras().catch(() => []);
+    const cameras = await getAllCameras().catch(() => []);
     const gazetteer = buildRoadGazetteer(cameras);
     const now = Date.now();
 
