@@ -1,10 +1,10 @@
 const express = require("express");
-const { getCameras } = require("../services/cameras-service");
+const { getAllCameras } = require("../services/cameras-all");
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const cameras = await getCameras();
+  const cameras = await getAllCameras();
   res.json({ count: cameras.length, cameras });
 });
 
